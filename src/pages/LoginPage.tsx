@@ -19,7 +19,7 @@ export default function LoginPage() {
         setLoading(true);
         setError('');
         try {
-            const { data } = await axiosClient.post('api/auth/login', {username, password});
+            const { data } = await axiosClient.post('/api/auth/login', {username, password});
             saveToken(data.data.token);
             navigate('/dashboard');
         } catch {
