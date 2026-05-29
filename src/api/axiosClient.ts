@@ -10,7 +10,8 @@ const axiosClient = axios.create(
 //automatically attach the token to each request
 axiosClient.interceptors.request.use((config) => {
     const token = localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer${token}`;
+    const isAuthEndpoint = config.url?.includes('/api/auth/');
+    if (token && !isAuthEndpoint) config.headers.Authorization = `Bearer ${token}`;
     return config;
 })
 
