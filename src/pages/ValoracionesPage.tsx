@@ -1,9 +1,5 @@
-import React from 'react'
-
 const ValoracionesPage = () => {
-  return (
-    <div>ValoracionesPage</div>
-  )
-}
+  return <div>ValoracionesPage</div>;
+};
 
-export default ValoracionesPage
+export default ValoracionesPage;
