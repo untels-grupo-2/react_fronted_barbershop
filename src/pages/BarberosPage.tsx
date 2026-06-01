@@ -1,9 +1,5 @@
-import React from 'react'
-
 const BarberosPage = () => {
-  return (
-    <div>BarberosPage</div>
-  )
-}
+  return <div>BarberosPage</div>;
+};
 
-export default BarberosPage
+export default BarberosPage;
