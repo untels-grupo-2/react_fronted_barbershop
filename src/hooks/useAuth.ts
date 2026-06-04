@@ -1,11 +1,12 @@
-export const useAuth = () => {
-  const isAuthenticated = () => !!localStorage.getItem('token');
-  const saveToken = (token: string) => localStorage.setItem('token', token);
-  const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
-    window.location.href = '/login';
-  };
+import { useContext } from 'react';
+import { AuthContext } from './authContext.ts';
 
-  return { isAuthenticated, saveToken, logout };
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error('useAuth must be used within AuthProvider');
+  }
+
+  return context;
 };

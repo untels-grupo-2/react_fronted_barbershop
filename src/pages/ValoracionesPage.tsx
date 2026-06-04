@@ -1,29 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Box, Button, Chip, Paper, Rating, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Typography } from '@mui/material';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Box, Button, Chip, Paper, Rating, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Typography, Card, CardContent, Stack } from '@mui/material';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import axios from 'axios';
 import axiosClient from '../api/axiosClient';
-
-interface RawValoracion {
-  valoracion_id: number;
-  usuarioId: number;
-  celular: string;
-  valoracion: number;
-  util: boolean;
-  estado?: number;
-  mensaje: string;
-  usuario_nombre: string;
-}
-
-interface Valoracion {
-  id: number;
-  usuarioId: number;
-  celular: string;
-  rating: number;
-  pendiente: boolean;
-  mensaje: string;
-  clienteNombre: string;
-}
+import { useNotification } from '../hooks/useNotification.ts';
+import { useGlobalBusy } from '../hooks/useGlobalBusy.ts';
+import type { RawValoracion, Valoracion } from '../types';
 
 const normalizarCelular = (celular: string) => celular.replace(/\D/g, '');
 
@@ -32,10 +14,13 @@ const construirMensajeWhatsapp = (valoracion: Valoracion) => {
 };
 
 export default function ValoracionesPage() {
+  const { showError } = useNotification();
+  const { isGlobalBusy, runWithGlobalBusy } = useGlobalBusy();
   const [valoraciones, setValoraciones] = useState<Valoracion[]>([]);
   const [loading, setLoading] = useState(false);
   const [procesandoId, setProcesandoId] = useState<number | null>(null);
   const [tab, setTab] = useState(0);
+  const procesandoRef = useRef(false);
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -49,11 +34,11 @@ export default function ValoracionesPage() {
       setValoraciones(mapped);
     } catch (error: unknown) {
       const backendMessage = axios.isAxiosError(error) ? (error.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(backendMessage ?? 'No se pudieron obtener las valoraciones');
+      showError(backendMessage ?? 'No se pudieron obtener las valoraciones');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [showError]);
 
   useEffect(() => {
     const init = async () => {
@@ -67,50 +52,95 @@ export default function ValoracionesPage() {
   const visibles = tab === 0 ? pendientes : respondidas;
 
   const responderPorWhatsapp = async (valoracion: Valoracion) => {
+    if (procesandoRef.current) {
+      return;
+    }
+
     const telefono = normalizarCelular(valoracion.celular);
     if (!telefono) {
-      alert('No se encontró un número de celular válido para este cliente');
+      showError('No se encontro un numero de celular valido para este cliente');
       return;
     }
 
     const mensaje = construirMensajeWhatsapp(valoracion);
     const whatsappUrl = `https://wa.me/${telefono}?text=${encodeURIComponent(mensaje)}`;
 
+    procesandoRef.current = true;
     setProcesandoId(valoracion.id);
     try {
-      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-      await axiosClient.patch(`/api/valoraciones/${valoracion.id}/estado`);
-      await cargar();
+      await runWithGlobalBusy(async () => {
+        window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+        await axiosClient.patch(`/api/valoraciones/${valoracion.id}/estado`);
+        await cargar();
+      });
     } catch (error: unknown) {
       const backendMessage = axios.isAxiosError(error) ? (error.response?.data as { message?: string } | undefined)?.message : undefined;
-      alert(backendMessage ?? 'No se pudo actualizar el estado de la valoración');
+      showError(backendMessage ?? 'No se pudo actualizar el estado de la valoracion');
     } finally {
+      procesandoRef.current = false;
       setProcesandoId(null);
     }
   };
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
-          Valoraciones
-        </Typography>
-        <Button variant="outlined" onClick={() => void cargar()} disabled={loading}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+        <Box>
+          <Typography variant="h5" sx={{ fontWeight: 800, lineHeight: 1.2, fontSize: { xs: '1.45rem', sm: '1.5rem' } }}>
+            Valoraciones
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Revisa feedback pendiente y responde rapidamente por WhatsApp.
+          </Typography>
+        </Box>
+        <Button variant="outlined" onClick={() => void cargar()} disabled={loading || isGlobalBusy} sx={{ width: { xs: '100%', sm: 'auto' } }}>
           {loading ? 'Actualizando...' : 'Actualizar'}
         </Button>
       </Box>
 
-      <Paper sx={{ mb: 2 }}>
-        <Tabs value={tab} onChange={(_, value) => setTab(value)}>
+      <Paper sx={{ mb: 2, borderRadius: 2, overflow: 'hidden' }}>
+        <Tabs value={tab} onChange={(_, value) => setTab(value)} variant="fullWidth">
           <Tab label={`Pendientes (${pendientes.length})`} />
           <Tab label={`Respondidas (${respondidas.length})`} />
         </Tabs>
       </Paper>
 
-      <Paper>
+      <Box sx={{ display: { xs: 'grid', sm: 'none' }, gap: 1.5 }}>
+        {visibles.map((valoracion) => (
+          <Card key={valoracion.id} sx={{ borderRadius: 2 }}>
+            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
+              <Stack spacing={1.25}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1, alignItems: 'flex-start' }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, wordBreak: 'break-word', minWidth: 0 }}>
+                    {valoracion.clienteNombre}
+                  </Typography>
+                  <Chip size="small" color={valoracion.pendiente ? 'warning' : 'success'} label={valoracion.pendiente ? 'Pendiente' : 'Respondida'} />
+                </Box>
+                <Rating value={valoracion.rating} precision={1} readOnly />
+                <Typography variant="body2" sx={{ wordBreak: 'break-word' }}>
+                  {valoracion.mensaje || '-'}
+                </Typography>
+                {valoracion.pendiente ? (
+                  <Button size="small" variant="contained" startIcon={<WhatsAppIcon />} onClick={() => void responderPorWhatsapp(valoracion)} disabled={procesandoId === valoracion.id || isGlobalBusy} sx={{ alignSelf: 'stretch' }}>
+                    {procesandoId === valoracion.id ? 'Enviando...' : 'Responder'}
+                  </Button>
+                ) : null}
+              </Stack>
+            </CardContent>
+          </Card>
+        ))}
+        {visibles.length === 0 && (
+          <Paper sx={{ borderRadius: 2, p: 2, textAlign: 'center' }}>
+            <Typography variant="body2" color="text.secondary">
+              {tab === 0 ? 'No hay valoraciones pendientes' : 'No hay valoraciones respondidas'}
+            </Typography>
+          </Paper>
+        )}
+      </Box>
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden', display: { xs: 'none', sm: 'block' } }}>
         <Table>
           <TableHead>
-            <TableRow sx={{ bgcolor: '#f5f5f5' }}>
+            <TableRow sx={{ bgcolor: 'rgba(15, 23, 42, 0.04)' }}>
               <TableCell>Cliente</TableCell>
               <TableCell>Valoración</TableCell>
               <TableCell>Comentario</TableCell>
@@ -135,7 +165,7 @@ export default function ValoracionesPage() {
                 </TableCell>
                 <TableCell align="center">
                   {valoracion.pendiente ? (
-                    <Button size="small" variant="contained" startIcon={<WhatsAppIcon />} onClick={() => void responderPorWhatsapp(valoracion)} disabled={procesandoId === valoracion.id}>
+                    <Button size="small" variant="contained" startIcon={<WhatsAppIcon />} onClick={() => void responderPorWhatsapp(valoracion)} disabled={procesandoId === valoracion.id || isGlobalBusy}>
                       {procesandoId === valoracion.id ? 'Enviando...' : 'Responder'}
                     </Button>
                   ) : (
