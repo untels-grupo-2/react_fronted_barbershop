@@ -6,7 +6,7 @@ import { useAuth } from '../hooks/useAuth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { saveToken } = useAuth();
+  const { saveSession } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -17,8 +17,7 @@ export default function LoginPage() {
     setError('');
     try {
       const { data } = await axiosClient.post('/api/autenticacion/login', { username, password });
-      saveToken(data.data.token);
-      localStorage.setItem('refreshToken', data.data.refreshToken);
+      saveSession(data.data.token, data.data.refreshToken, username);
       navigate('/dashboard');
     } catch {
       setError('Credenciales incorrectas. Verifica usuario y contraseña');
@@ -28,10 +27,10 @@ export default function LoginPage() {
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f5f5f5' }}>
-      <Card sx={{ width: 400, p: 2 }}>
-        <CardContent>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center', mb: 3 }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', bgcolor: '#f5f5f5', px: 1.25 }}>
+      <Card sx={{ width: '100%', maxWidth: 400, p: { xs: 0.5, sm: 2 }, borderRadius: 2 }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
+          <Typography variant="h5" sx={{ fontWeight: 'bold', textAlign: 'center', mb: 2.5, fontSize: { xs: '1.12rem', sm: '1.5rem' }, lineHeight: 1.25 }}>
             Diamond BarberHub — Admin
           </Typography>
           {error && (

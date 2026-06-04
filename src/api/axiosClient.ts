@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { clearAuthSession, updateAuthTokens } from '../lib/authSession.ts';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -38,8 +39,7 @@ axiosClient.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
 
       if (!refreshToken) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        clearAuthSession();
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -63,8 +63,7 @@ axiosClient.interceptors.response.use(
         const newRefreshToken = response.data?.data?.refreshToken;
 
         if (newToken && newRefreshToken) {
-          localStorage.setItem('token', newToken);
-          localStorage.setItem('refreshToken', newRefreshToken);
+          updateAuthTokens(newToken, newRefreshToken);
           error.config.headers.Authorization = `Bearer ${newToken}`;
           processQueue(null, newToken);
           return axiosClient(error.config);
@@ -74,16 +73,14 @@ axiosClient.interceptors.response.use(
       } catch (refreshError) {
         const axiosError = refreshError instanceof AxiosError ? refreshError : null;
         processQueue(axiosError, null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('refreshToken');
+        clearAuthSession();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
       }
     } else if (status === 401 && isAuthEndpoint) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
+      clearAuthSession();
       window.location.href = '/login';
     }
 
