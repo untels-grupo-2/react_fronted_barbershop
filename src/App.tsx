@@ -4,6 +4,7 @@ import DashboardPage from './pages/DashboardPage';
 import ServiciosPage from './pages/ServiciosPage';
 import BarberosPage from './pages/BarberosPage';
 import ValoracionesPage from './pages/ValoracionesPage';
+import ReportesPage from './pages/ReportesPage';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AdminLayout from './components/layout/AdminLayout';
 
@@ -18,6 +19,7 @@ export default function App() {
           <Route path="servicios" element={<ServiciosPage />} />
           <Route path="barberos" element={<BarberosPage />} />
           <Route path="valoraciones" element={<ValoracionesPage />} />
+          <Route path="reportes" element={<ReportesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
