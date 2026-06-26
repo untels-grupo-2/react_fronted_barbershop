@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Autocomplete, Box, Button, Card, CardContent, CircularProgress, Grid, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
-import { Assessment, AttachMoney, ConfirmationNumber, EventNote } from '@mui/icons-material';
+import { Assessment, AttachMoney, ConfirmationNumber, Download, EventNote } from '@mui/icons-material';
+import { descargarReportePdf } from '../api/reporteService';
 import { useReporte } from '../hooks/useReporte';
 import { calcularRango, type PresetPeriodo } from '../lib/rangoFechas';
 import GraficoIngresosPorDia from '../components/reportes/GraficoIngresosPorDia';
@@ -116,6 +117,16 @@ export default function ReportesPage() {
       {/* Resultados */}
       {vista && vista.kpis.totalReservas > 0 && (
         <>
+          {/* Encabezado de resultados: título a la izquierda, descarga a la derecha. */}
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 1.5, mb: 2 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>
+              Resultados
+            </Typography>
+            <Button variant="outlined" startIcon={<Download />} onClick={() => descargarReportePdf(vista, filtroNormalizado)} sx={{ width: { xs: '100%', sm: 'auto' }, flexShrink: 0 }}>
+              Descargar PDF
+            </Button>
+          </Box>
+
           {/* KPI cards compactas (mismo lenguaje visual que el Dashboard).
               Altura reducida para que los gráficos suban y se vean sin scroll. */}
           <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 2 }}>
