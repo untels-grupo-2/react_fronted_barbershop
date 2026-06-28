@@ -4,3 +4,5 @@ export type { Servicio, RawServicio, TipoServicioOption, RawTipoServicio } from 
 export type { Valoracion, RawValoracion } from './valoracion';
 export type { AuthSession, AuthUser } from './auth';
 export type { RawReporte, RawReporteSeries, FiltroReporte, ReporteKpis, PuntoIngresoDia, PorcionServicio, FilaBarbero, ReporteVista } from './reporte';
+export type { DiaSemana, TurnoNombre, RawHorarioInstancia, RawHorarioBase, HorarioSemana, ActualizarTurnosDiaRequest } from './horario';
+export { DIAS_SEMANA, TURNOS } from './horario';
