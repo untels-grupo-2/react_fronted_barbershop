@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AppBar, Avatar, Box, Button, Chip, Container, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Typography } from '@mui/material';
-import { Assessment, ContentCut, Dashboard, Logout, Menu, Reviews, RoomService } from '@mui/icons-material';
+import { Assessment, CalendarMonth, ContentCut, Dashboard, Logout, Menu, Reviews, RoomService } from '@mui/icons-material';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useGlobalBusy } from '../../hooks/useGlobalBusy.ts';
@@ -22,6 +22,7 @@ const AdminLayout = () => {
       { label: 'Barberos', path: '/barberos', icon: <ContentCut /> },
       { label: 'Valoraciones', path: '/valoraciones', icon: <Reviews /> },
       { label: 'Reportes', path: '/reportes', icon: <Assessment /> },
+      { label: 'Horarios', path: '/horarios', icon: <CalendarMonth /> },
     ],
     [],
   );
