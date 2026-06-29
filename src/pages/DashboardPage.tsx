@@ -16,8 +16,10 @@ export default function DashboardPage() {
     const hoy = formatDate(now);
     const inicioMes = formatDate(new Date(now.getFullYear(), now.getMonth(), 1));
     // Llamadas paralelas al backend
-    Promise.all([axiosClient.get(`/api/reservas/admin?fecha=${hoy}`), axiosClient.get('/api/barberos'), axiosClient.get('/api/valoraciones'), axiosClient.get('/api/reservas/reportes', { params: { fechaInicio: inicioMes, fechaFin: hoy } })]).then(([reservasRes, barberosRes, valoracionRes, reportesRes]) => {
-      const reservas = (reservasRes.data.data as ReservaBackend[]).map((item) => ({ id: item.reservaId, cliente: item.usuarioNombre, barbero: item.barberoNombre, servicio: item.servicioNombre, hora: item.horarioRango, estado: item.estado }));
+    Promise.all([axiosClient.get('/api/reservas/admin', { params: { fechaDesde: hoy, fechaHasta: hoy, size: 100 } }), axiosClient.get('/api/barberos'), axiosClient.get('/api/valoraciones'), axiosClient.get('/api/reservas/reportes', { params: { fechaInicio: inicioMes, fechaFin: hoy } })]).then(([reservasRes, barberosRes, valoracionRes, reportesRes]) => {
+      // /reservas/admin devuelve un Page<>: las reservas están en data.data.content
+      const contenido = (reservasRes.data.data?.content ?? []) as ReservaBackend[];
+      const reservas = contenido.map((item) => ({ id: item.reservaId, cliente: item.usuarioNombre, barbero: item.barberoNombre, servicio: item.servicioNombre, hora: item.horarioRango, estado: item.estado }));
       const valoraciones = (valoracionRes.data.data ?? []) as Array<{ valoracion: number }>;
       const promedioValoracion = valoraciones.length > 0 ? valoraciones.reduce((acc, v) => acc + v.valoracion, 0) / valoraciones.length : 0;
       const ingresosMes = Number(reportesRes.data.data?.montoTotal ?? 0);

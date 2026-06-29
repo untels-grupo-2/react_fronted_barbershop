@@ -6,6 +6,7 @@ import BarberosPage from './pages/BarberosPage';
 import ValoracionesPage from './pages/ValoracionesPage';
 import ReportesPage from './pages/ReportesPage';
 import HorariosPage from './pages/HorariosPage';
+import ReservasPage from './pages/ReservasPage';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 import AdminLayout from './components/layout/AdminLayout';
 
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="valoraciones" element={<ValoracionesPage />} />
           <Route path="reportes" element={<ReportesPage />} />
           <Route path="horarios" element={<HorariosPage />} />
+          <Route path="reservas" element={<ReservasPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
