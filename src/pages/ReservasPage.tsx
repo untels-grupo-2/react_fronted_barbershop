@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { Box, Button, Chip, CircularProgress, FormControl, Grid, InputLabel, MenuItem, Paper, Select, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
-import { FilterAltOff } from '@mui/icons-material';
+import { Box, Button, Card, CardContent, Chip, CircularProgress, FormControl, Grid, IconButton, InputLabel, MenuItem, Paper, Select, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { ChevronLeft, ChevronRight, FilterAltOff } from '@mui/icons-material';
 import { cambiarEstadoReserva } from '../api/reservaService';
 import { useReservasFiltradas } from '../hooks/useReservasFiltradas';
 import { useNotification } from '../hooks/useNotification';
@@ -137,54 +137,105 @@ export default function ReservasPage() {
         </Box>
       </Paper>
 
-      {/* Tabla */}
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'rgba(15, 23, 42, 0.04)' }}>
-                <TableCell>ID</TableCell>
-                <TableCell>Cliente</TableCell>
-                <TableCell>Barbero</TableCell>
-                <TableCell>Servicio</TableCell>
-                <TableCell>Fecha</TableCell>
-                <TableCell>Hora</TableCell>
-                <TableCell>Estado</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 5 }}>
-                    <CircularProgress size={28} />
-                  </TableCell>
-                </TableRow>
-              ) : reservas.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
-                    No hay reservas para los filtros seleccionados
-                  </TableCell>
-                </TableRow>
-              ) : (
-                reservas.map((r) => (
-                  <TableRow key={r.id} hover onClick={() => setSeleccionada(r)} sx={{ cursor: 'pointer' }}>
-                    <TableCell>{r.id}</TableCell>
-                    <TableCell>{r.cliente}</TableCell>
-                    <TableCell>{r.barbero}</TableCell>
-                    <TableCell>{r.servicio}</TableCell>
-                    <TableCell>{r.fecha}</TableCell>
-                    <TableCell>{r.hora}</TableCell>
-                    <TableCell>
+      {/* Estado de carga / vacío (compartido por ambas vistas) */}
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+          <CircularProgress />
+        </Box>
+      ) : reservas.length === 0 ? (
+        <Paper sx={{ borderRadius: 2, p: 4, textAlign: 'center' }}>
+          <Typography variant="body2" color="text.secondary">
+            No hay reservas para los filtros seleccionados
+          </Typography>
+        </Paper>
+      ) : (
+        <>
+          {/* Vista móvil: tarjetas por reserva */}
+          <Box sx={{ display: { xs: 'grid', md: 'none' }, gap: 1.5 }}>
+            {reservas.map((r) => (
+              <Card key={r.id} onClick={() => setSeleccionada(r)} sx={{ borderRadius: 2, cursor: 'pointer' }}>
+                <CardContent sx={{ p: 1.75, '&:last-child': { pb: 1.75 } }}>
+                  <Stack spacing={1}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1 }}>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography variant="subtitle2" sx={{ fontWeight: 700, wordBreak: 'break-word' }}>
+                          {r.cliente}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          #{r.id} · {r.fecha} · {r.hora}
+                        </Typography>
+                      </Box>
                       <Chip label={r.estado} color={COLOR_ESTADO[r.estado]} size="small" />
-                    </TableCell>
+                    </Box>
+                    <Typography variant="body2">
+                      <strong>Barbero:</strong> {r.barbero}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>Servicio:</strong> {r.servicio}
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+
+          {/* Vista escritorio: tabla */}
+          <Paper sx={{ borderRadius: 2, overflow: 'hidden', display: { xs: 'none', md: 'block' } }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'rgba(15, 23, 42, 0.04)' }}>
+                    <TableCell>ID</TableCell>
+                    <TableCell>Cliente</TableCell>
+                    <TableCell>Barbero</TableCell>
+                    <TableCell>Servicio</TableCell>
+                    <TableCell>Fecha</TableCell>
+                    <TableCell>Hora</TableCell>
+                    <TableCell>Estado</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination component="div" count={totalElements} page={page} onPageChange={(_, nuevaPagina) => setPage(nuevaPagina)} rowsPerPage={size} rowsPerPageOptions={[size]} labelRowsPerPage="Por página:" labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`} />
-      </Paper>
+                </TableHead>
+                <TableBody>
+                  {reservas.map((r) => (
+                    <TableRow key={r.id} hover onClick={() => setSeleccionada(r)} sx={{ cursor: 'pointer' }}>
+                      <TableCell>{r.id}</TableCell>
+                      <TableCell>{r.cliente}</TableCell>
+                      <TableCell>{r.barbero}</TableCell>
+                      <TableCell>{r.servicio}</TableCell>
+                      <TableCell>{r.fecha}</TableCell>
+                      <TableCell>{r.hora}</TableCell>
+                      <TableCell>
+                        <Chip label={r.estado} color={COLOR_ESTADO[r.estado]} size="small" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Paper>
+        </>
+      )}
+
+      {/* Paginación: layout propio en móvil (flecha · texto · flecha), MUI en escritorio */}
+      {!loading && reservas.length > 0 && (
+        <Paper sx={{ borderRadius: 2, mt: 1.5 }}>
+          {/* Móvil */}
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', justifyContent: 'space-between', px: 1, py: 0.5 }}>
+            <IconButton onClick={() => setPage(page - 1)} disabled={page === 0} aria-label="Página anterior">
+              <ChevronLeft />
+            </IconButton>
+            <Typography variant="body2" color="text.secondary">
+              {page * size + 1}-{Math.min((page + 1) * size, totalElements)} de {totalElements}
+            </Typography>
+            <IconButton onClick={() => setPage(page + 1)} disabled={(page + 1) * size >= totalElements} aria-label="Página siguiente">
+              <ChevronRight />
+            </IconButton>
+          </Box>
+          {/* Escritorio */}
+          <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+            <TablePagination component="div" count={totalElements} page={page} onPageChange={(_, nuevaPagina) => setPage(nuevaPagina)} rowsPerPage={size} rowsPerPageOptions={[size]} labelRowsPerPage="Por página:" labelDisplayedRows={({ from, to, count }) => `${from}-${to} de ${count}`} />
+          </Box>
+        </Paper>
+      )}
 
       <ReservaDetalleDialog reserva={seleccionada} guardando={guardando} onClose={() => setSeleccionada(null)} onCambiarEstado={(id, estado, motivo) => void handleCambiarEstado(id, estado, motivo)} />
     </Box>
